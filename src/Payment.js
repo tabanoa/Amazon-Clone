@@ -6,10 +6,9 @@ import {Link, useHistory} from 'react-router-dom';
 import {CardElement, useStripe, useElements} from '@stripe/react-stripe-js'
 import CurrencyFormat from 'react-currency-format';
 import { getBasketTotal } from './reducer';
-import axios from './axios';
+import axios from './axios'
 
-
-function Pyament() {
+function Payment() {
     const [{basket, user}, dispatch] = useStateValue();
     const history = useHistory();
 
@@ -17,7 +16,7 @@ function Pyament() {
     const elements = useElements();
 
     const [succeeded, setSucceeded] = useState(false);
-    const [processing, setProcessing] = useState('');
+    const [processing, setProcessing] = useState("");
     const [error, setError] = useState(null);
     const [disabled, setDisabled] = useState(true);
     const [clientSecret, setClientSecret] = useState(true);
@@ -27,38 +26,42 @@ function Pyament() {
     const getClientSecret = async () => {
         const response = await axios({
             method: 'post',
-            url: `/payment/create?total=${getBasketTotal(basket) *100}`
+            url: `/payments/create?total=${getBasketTotal(basket) * 100}`
         });
-        setClientSecret(response.data.clientSecret)
+       setClientSecret(response.data.clientSecret)
     }
-
-        getClientSecret();
+         getClientSecret();
     }, [basket])
 
-    const handlesSubmit = async(event) => {
+    console.log("THE SECRET IS >>>", clientSecret)
+
+    const handleSubmit = async(event) => {
         //do stripe stuff
         event.preventDefault();
         setProcessing(true);
 
-        const payload = await stripe.confirmCardPayment(clientSecret,
-             {payment_method: {
+        const payload = await stripe.confirmCardPayment(clientSecret, {
+            payment_method: {
                 card: elements.getElement(CardElement)
              }
         }).then(({paymentIntent}) => {
             //payment intent = payment confirmation
+
             setSucceeded(true);
             setError(null);
             setProcessing(false);
 
-            history.replace('/orders')
+            dispatch({
+                type: 'EMPTY_BASKET'
+            })
 
+            history.replace('/orders')
         })
     }
     const handleChange = event => {
         //Listen  for changes in cardElement and display user errors when entering card etails
         setDisabled(event.empty);
         setError(event.error ? event.error.message : "");
-
     }
 
     return (
@@ -104,14 +107,12 @@ function Pyament() {
                     </div>
                     <div className='payment_details'>
                         {/* Stripe magic below */}
-                        <form onSubmit={handlesSubmit}>
+                        <form onSubmit={handleSubmit}>
                             <CardElement onChange={handleChange} />
                             <div className='payment_priceContainer'>
                                 <CurrencyFormat
                                     renderText={(value)=> (
-                                        <>
                                         <h3>Order Total: {value}</h3>
-                                        </>
                                     )}
                                     decimalScale={2}
                                     value={getBasketTotal(basket)} 
@@ -133,4 +134,4 @@ function Pyament() {
     )
 }
 
-export default Pyament;
+export default Payment;

@@ -16,9 +16,6 @@ app.use(express.json());
 // - API Route
 app.get('/', (request, response) => response.status(200).send('hello world'))
 
-//example endpoint
-//http://localhost:4000     
-
 app.post('/payments/create', async (request, response) => {
     const total = request.query.total;
 
@@ -34,3 +31,6 @@ app.post('/payments/create', async (request, response) => {
         clientSecret: paymentIntent.client_secret,
     })
 })
+
+// - Listen Command
+exports.api = functions.https.onRequest(app)    
